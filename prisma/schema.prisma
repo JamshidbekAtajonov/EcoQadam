@@ -1,0 +1,419 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleKey {
+  STUDENT
+  TEACHER
+  SCHOOL_ADMIN
+  DISTRICT_ADMIN
+}
+
+enum LessonCategory {
+  WATER
+  DROUGHT
+  TREE_CARE
+  WASTE
+  AIR
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ParticipationStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum VerificationStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum TreeHealthStatus {
+  HEALTHY
+  NEEDS_ATTENTION
+  DEAD
+}
+
+enum ImpactMetricType {
+  WATER_SAVED_LITERS
+  WASTE_SORTED_KG
+  TREES_CARED
+  TREE_SURVIVAL_PERCENT
+  TASKS_COMPLETED
+  STUDENTS_ENGAGED
+}
+
+model District {
+  id        String         @id @default(cuid())
+  name      String
+  code      String         @unique
+  mahallas  Mahalla[]
+  schools   School[]
+  users     User[]
+  impact    ImpactMetric[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Mahalla {
+  id         String         @id @default(cuid())
+  name       String
+  districtId String
+  district   District       @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  schools    School[]
+  impact     ImpactMetric[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([districtId, name])
+  @@index([districtId])
+}
+
+model School {
+  id         String         @id @default(cuid())
+  name       String
+  code       String         @unique
+  districtId String
+  mahallaId  String
+  district   District       @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  mahalla    Mahalla        @relation(fields: [mahallaId], references: [id], onDelete: Restrict)
+  classes    Class[]
+  users      User[]
+  trees      Tree[]
+  impact     ImpactMetric[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([districtId])
+  @@index([mahallaId])
+}
+
+model Class {
+  id        String         @id @default(cuid())
+  name      String
+  grade     Int
+  schoolId  String
+  school    School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students  User[]
+  impact    ImpactMetric[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([schoolId, name])
+  @@index([schoolId])
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  key       RoleKey  @unique
+  nameUz    String
+  nameEn    String
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id                    String                   @id @default(cuid())
+  name                  String
+  email                 String?                  @unique
+  phone                 String?                  @unique
+  passwordHash          String
+  roleId                String
+  schoolId              String?
+  classId               String?
+  districtId            String?
+  isActive              Boolean                  @default(true)
+  lastActiveAt          DateTime                 @default(now())
+  role                  Role                     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  school                School?                  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  class                 Class?                   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  district              District?                @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  lessonProgress        LessonProgress[]
+  quizAttempts          QuizAttempt[]
+  participations        ChallengeParticipation[]
+  verifications         Verification[]           @relation("ReviewerVerifications")
+  treeMonitoringRecords TreeMonitoringRecord[]
+  impact                ImpactMetric[]
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  @@index([roleId])
+  @@index([schoolId])
+  @@index([classId])
+  @@index([districtId])
+}
+
+model Lesson {
+  id              String           @id @default(cuid())
+  slug            String           @unique
+  category        LessonCategory
+  order           Int
+  titleUz         String
+  titleEn         String
+  summaryUz       String
+  summaryEn       String
+  contentUz       String
+  contentEn       String
+  taskUz          String
+  taskEn          String
+  imageUrl        String?
+  infographic     Json?
+  durationMinutes Int              @default(8)
+  isCore          Boolean          @default(true)
+  isPublished     Boolean          @default(true)
+  progress        LessonProgress[]
+  quizzes         Quiz[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([category, order])
+}
+
+model LessonProgress {
+  id               String               @id @default(cuid())
+  userId           String
+  lessonId         String
+  status           LessonProgressStatus @default(NOT_STARTED)
+  percent          Int                  @default(0)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  offlineUpdatedAt DateTime?
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson           Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([lessonId])
+}
+
+model Quiz {
+  id        String         @id @default(cuid())
+  slug      String         @unique
+  titleUz   String
+  titleEn   String
+  category  LessonCategory
+  lessonId  String?
+  lesson    Lesson?        @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  questions Question[]
+  attempts  QuizAttempt[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([category])
+  @@index([lessonId])
+}
+
+model Question {
+  id            String         @id @default(cuid())
+  quizId        String
+  topic         LessonCategory
+  promptUz      String
+  promptEn      String
+  explanationUz String
+  explanationEn String
+  order         Int
+  quiz          Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options       AnswerOption[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([quizId, order])
+  @@index([quizId])
+}
+
+model AnswerOption {
+  id         String   @id @default(cuid())
+  questionId String
+  labelUz    String
+  labelEn    String
+  isCorrect  Boolean  @default(false)
+  order      Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, order])
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  userId         String
+  quizId         String
+  score          Int
+  correctCount   Int
+  incorrectCount Int
+  answers        Json
+  weakTopics     Json
+  recommendation Json?
+  syncId         String?  @unique
+  startedAt      DateTime @default(now())
+  completedAt    DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([userId, completedAt])
+  @@index([quizId])
+}
+
+model Challenge {
+  id             String                   @id @default(cuid())
+  slug           String                   @unique
+  category       LessonCategory
+  titleUz        String
+  titleEn        String
+  descriptionUz  String
+  descriptionEn  String
+  durationDays   Int
+  targetValue    Float?
+  unit           String?
+  isActive       Boolean                  @default(true)
+  participations ChallengeParticipation[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+}
+
+model ChallengeParticipation {
+  id            String              @id @default(cuid())
+  userId        String
+  challengeId   String
+  startDate     DateTime
+  endDate       DateTime
+  status        ParticipationStatus @default(DRAFT)
+  comment       String?
+  submittedAt   DateTime?
+  approvedAt    DateTime?
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge     Challenge           @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  dailyProgress DailyProgress[]
+  evidence      Evidence[]
+  verification  Verification?
+  impact        ImpactMetric[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([userId, status])
+  @@index([challengeId])
+}
+
+model DailyProgress {
+  id               String                 @id @default(cuid())
+  participationId  String
+  date             DateTime
+  completed        Boolean                @default(false)
+  value            Float?
+  note             String?
+  offlineUpdatedAt DateTime?
+  participation    ChallengeParticipation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@unique([participationId, date])
+  @@index([participationId])
+}
+
+model Evidence {
+  id              String                 @id @default(cuid())
+  participationId String
+  storageKey      String
+  url             String
+  filename        String
+  mimeType        String
+  caption         String?
+  participation   ChallengeParticipation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  createdAt       DateTime               @default(now())
+
+  @@index([participationId])
+}
+
+model Verification {
+  id              String                 @id @default(cuid())
+  participationId String                 @unique
+  reviewerId      String
+  status          VerificationStatus
+  reason          String?
+  participation   ChallengeParticipation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  reviewer        User                   @relation("ReviewerVerifications", fields: [reviewerId], references: [id], onDelete: Restrict)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([reviewerId])
+}
+
+model ImpactMetric {
+  id              String                  @id @default(cuid())
+  type            ImpactMetricType
+  value           Float
+  unit            String
+  recordedAt      DateTime                @default(now())
+  participationId String?
+  userId          String?
+  classId         String?
+  schoolId        String?
+  mahallaId       String?
+  districtId      String?
+  participation   ChallengeParticipation? @relation(fields: [participationId], references: [id], onDelete: SetNull)
+  user            User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  class           Class?                  @relation(fields: [classId], references: [id], onDelete: SetNull)
+  school          School?                 @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  mahalla         Mahalla?                @relation(fields: [mahallaId], references: [id], onDelete: SetNull)
+  district        District?               @relation(fields: [districtId], references: [id], onDelete: SetNull)
+
+  @@index([type, recordedAt])
+  @@index([userId])
+  @@index([schoolId])
+  @@index([districtId])
+}
+
+model Tree {
+  id              String                 @id @default(cuid())
+  identifier      String                 @unique
+  species         String
+  plantedAt       DateTime
+  schoolId        String?
+  area            String
+  latitude        Float?
+  longitude       Float?
+  initialPhotoUrl String?
+  lastWateredAt   DateTime?
+  status          TreeHealthStatus       @default(HEALTHY)
+  lastCheckedAt   DateTime?
+  survived        Boolean                @default(true)
+  school          School?                @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  monitoring      TreeMonitoringRecord[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([schoolId, status])
+}
+
+model TreeMonitoringRecord {
+  id         String           @id @default(cuid())
+  treeId     String
+  observerId String?
+  checkedAt  DateTime         @default(now())
+  photoUrl   String?
+  wateredAt  DateTime?
+  status     TreeHealthStatus
+  survived   Boolean
+  notes      String?
+  tree       Tree             @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  observer   User?            @relation(fields: [observerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime         @default(now())
+
+  @@index([treeId, checkedAt])
+  @@index([observerId])
+}

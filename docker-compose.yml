@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ecoqadam
+      POSTGRES_PASSWORD: ecoqadam
+      POSTGRES_DB: ecoqadam
+    ports:
+      - "5432:5432"
+    volumes:
+      - ecoqadam_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecoqadam -d ecoqadam"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  ecoqadam_postgres:

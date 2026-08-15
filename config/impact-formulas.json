@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "water": {
+    "litersSavedPerCompletedDay": 15,
+    "description": "Conservative estimate for one completed daily water-saving check-in."
+  },
+  "waste": {
+    "kilogramsPerReportedKilogram": 1,
+    "description": "Uses the verified weight entered by the student."
+  },
+  "trees": {
+    "caredTreePerApprovedParticipation": 1,
+    "survivalStatuses": ["HEALTHY", "NEEDS_ATTENTION"],
+    "description": "A tree survives unless its latest verified state is DEAD."
+  },
+  "engagement": {
+    "activeWithinDays": 30,
+    "description": "A student is active after learning, quiz, or challenge activity in this window."
+  }
+}
