@@ -5,15 +5,15 @@ import type { StorageAdapter } from "@/lib/storage/types";
 export class VercelBlobStorageAdapter implements StorageAdapter {
   async save(input: { bytes: Uint8Array; filename: string; mimeType: string }) {
     const filename = path.basename(input.filename).replace(/[^a-zA-Z0-9._-]/g, "-") || "evidence.jpg";
-    const blob = await put(`uploads/${filename}`, Buffer.from(input.bytes), {
-      access: "public",
+    const blob = await put(filename, Buffer.from(input.bytes), {
+      access: "private",
       addRandomSuffix: true,
       contentType: input.mimeType,
     });
 
     return {
       key: blob.pathname,
-      url: blob.url,
+      url: `/api/files/${encodeURIComponent(blob.pathname)}`,
       filename: input.filename,
       mimeType: blob.contentType,
       size: input.bytes.byteLength,
@@ -21,7 +21,7 @@ export class VercelBlobStorageAdapter implements StorageAdapter {
   }
 
   async read(key: string) {
-    const result = await get(key, { access: "public" });
+    const result = await get(key, { access: "private" });
     if (!result || result.statusCode !== 200) throw new Error("File not found");
 
     return {

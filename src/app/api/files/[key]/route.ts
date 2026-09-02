@@ -8,7 +8,7 @@ export async function GET(_request: Request, context: RouteContext<"/api/files/[
   try {
     const file = await storage.read(key);
     return new Response(file.bytes as BodyInit, {
-      headers: { "Content-Type": file.mimeType, "Cache-Control": "public, max-age=31536000, immutable" },
+      headers: { "Content-Type": file.mimeType, "Cache-Control": "private, max-age=3600" },
     });
   } catch {
     return Response.json({ message: "File not found" }, { status: 404 });

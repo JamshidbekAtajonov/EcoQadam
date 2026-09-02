@@ -129,7 +129,7 @@ Browsers permit service workers on `localhost`; production deployments require H
 ## Storage and impact configuration
 
 - Uploaded images are written to `storage/uploads` locally. The folder is ignored by Git.
-- When `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` is available, uploads use persistent Vercel Blob storage automatically.
+- When `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` is available, uploads use persistent private Vercel Blob storage automatically and are served through the authenticated file endpoint.
 - Image uploads are limited to 4 MB so multipart form requests remain below Vercel Functions' request-size limit.
 - Measurement constants live in `config/impact-formulas.json`; domain functions in `src/lib/impact.ts` consume that file.
 - Approved submissions create `ImpactMetric` records. Rejected submissions never affect dashboards.
