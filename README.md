@@ -14,7 +14,7 @@ EcoQadam is a mobile-first climate learning and action platform for school stude
 - Twenty-tree monitoring demo with ID, species, planting date, place, geolocation, photos, watering, health, checks, and survival.
 - Email or phone + password authentication, signed HTTP-only sessions, and server-side RBAC.
 - PWA manifest, install icon, service worker, offline lesson/quiz caching, queued results, and online resynchronization.
-- Local file adapter with a single interface that can later be replaced by S3, R2, or another cloud store.
+- Local file storage in development and persistent Vercel Blob storage in production.
 
 ## Architecture
 
@@ -41,7 +41,7 @@ src/
   i18n/                        UZ/EN interface dictionaries
   lib/
     auth/                      Sessions, guards, permissions
-    storage/                   Swappable storage interface and local adapter
+    storage/                   Local and Vercel Blob storage adapters
     impact.ts / quiz.ts        Tested domain logic
 ```
 
@@ -128,11 +128,14 @@ Browsers permit service workers on `localhost`; production deployments require H
 
 ## Storage and impact configuration
 
-- Uploaded images are written to `storage/uploads` by `LocalStorageAdapter`. The folder is ignored by Git.
-- `src/lib/storage/index.ts` is the only binding to replace when adding an S3-compatible adapter.
+- Uploaded images are written to `storage/uploads` locally. The folder is ignored by Git.
+- When `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` is available, uploads use persistent Vercel Blob storage automatically.
+- Image uploads are limited to 4 MB so multipart form requests remain below Vercel Functions' request-size limit.
 - Measurement constants live in `config/impact-formulas.json`; domain functions in `src/lib/impact.ts` consume that file.
 - Approved submissions create `ImpactMetric` records. Rejected submissions never affect dashboards.
 
 ## Production notes
 
-Use `npm run build` followed by `npm start`. Apply committed migrations with `npx prisma migrate deploy`. Set a strong `SESSION_SECRET`, a production PostgreSQL `DATABASE_URL`, persistent object storage, HTTPS, upload scanning, rate limiting, and an SMS/email verification provider before a public rollout.
+Import the GitHub repository into Vercel, connect a PostgreSQL integration that supplies `DATABASE_URL`, connect a Vercel Blob store, and set a strong `SESSION_SECRET`. The configured `vercel-build` command applies committed migrations, seeds demo data only when the database is empty, and builds Next.js. Later deployments keep existing production data.
+
+For a public rollout beyond the demo, also add upload scanning, rate limiting, and an SMS/email verification provider, and replace the shared demo passwords.

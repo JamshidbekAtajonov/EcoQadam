@@ -1,5 +1,9 @@
 import { LocalStorageAdapter } from "@/lib/storage/local";
 import type { StorageAdapter } from "@/lib/storage/types";
+import { VercelBlobStorageAdapter } from "@/lib/storage/vercel-blob";
 
-// Swap this single binding for an S3/R2 adapter without changing route handlers.
-export const storage: StorageAdapter = new LocalStorageAdapter();
+const hasVercelBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+
+export const storage: StorageAdapter = hasVercelBlob
+  ? new VercelBlobStorageAdapter()
+  : new LocalStorageAdapter();

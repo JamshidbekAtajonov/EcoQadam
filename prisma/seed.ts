@@ -35,6 +35,11 @@ async function resetDatabase() {
 }
 
 async function main() {
+  if (process.argv.includes("--if-empty") && await prisma.user.count() > 0) {
+    console.log("EcoQadam demo data already exists; production seed skipped.");
+    return;
+  }
+
   await resetDatabase();
   const passwordHash = await bcrypt.hash("EcoQadam123!", 12);
 

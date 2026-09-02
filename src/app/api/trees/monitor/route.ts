@@ -21,8 +21,8 @@ export async function POST(request: Request) {
   const file = form.get("file");
   let photoUrl: string | undefined;
   if (file instanceof File && file.size > 0) {
-    if (file.size > 8 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      return Response.json({ message: "JPG, PNG yoki WebP rasm (8 MB gacha) yuklang." }, { status: 400 });
+    if (file.size > 4 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      return Response.json({ message: "JPG, PNG yoki WebP rasm (4 MB gacha) yuklang." }, { status: 400 });
     }
     photoUrl = (await storage.save({ bytes: new Uint8Array(await file.arrayBuffer()), filename: file.name, mimeType: file.type })).url;
   }

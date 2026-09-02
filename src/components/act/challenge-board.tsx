@@ -83,7 +83,7 @@ export function ChallengeBoard() {
         </div>
 
         <div className="evidence-form">
-          <label className="photo-drop"><Camera size={21} /><span>{file ? file.name : "Rasm qo‘shish"}</span><small>JPG, PNG yoki WebP · 8 MB</small><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></label>
+          <label className="photo-drop"><Camera size={21} /><span>{file ? file.name : "Rasm qo‘shish"}</span><small>JPG, PNG yoki WebP · 4 MB</small><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></label>
           <label className="comment-field"><span>Bugungi izoh</span><textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Qanday suv tejadingiz?" /></label>
           <button className="primary-button" onClick={submitForReview} disabled={pending}>
             {pending ? <LoaderCircle className="spin" size={17} /> : <Send size={17} />} Tekshirishga yuborish

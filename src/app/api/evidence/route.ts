@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { storage } from "@/lib/storage";
 
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(request: Request) {
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const challengeSlug = String(form.get("challengeSlug") ?? "");
   const caption = String(form.get("caption") ?? "");
   if (!(file instanceof File) || !ALLOWED_TYPES.has(file.type) || file.size > MAX_FILE_SIZE) {
-    return Response.json({ message: "JPG, PNG yoki WebP rasm (8 MB gacha) yuklang." }, { status: 400 });
+    return Response.json({ message: "JPG, PNG yoki WebP rasm (4 MB gacha) yuklang." }, { status: 400 });
   }
 
   const participation = await prisma.challengeParticipation.findFirst({
